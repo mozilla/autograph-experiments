@@ -7,10 +7,8 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"os"
 	"time"
 
-	"github.com/joho/godotenv"
 	"github.com/open-quantum-safe/liboqs-go/oqs"
 )
 
@@ -43,18 +41,6 @@ type response struct {
 	Signature string `json:"signature"`
 	PublicKey string `json:"publicKey"`
 	//probably need a message field here
-}
-
-// use godot package to load/read the .env file and
-// return the value of the key
-func GoDotEnvVariable(key string) string {
-	// Load .env file
-	err := godotenv.Load("../.env")
-	if err != nil {
-		log.Fatalf("Error loading .env file")
-	}
-
-	return os.Getenv(key)
 }
 
 // This function processes the request struct and returns a struct of the data

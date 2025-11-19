@@ -7,12 +7,9 @@ import (
 	"fmt"
 	"hash/crc32"
 	"log"
-	"os"
-	"time"
 
 	kms "cloud.google.com/go/kms/apiv1"
 	kmspb "cloud.google.com/go/kms/apiv1/kmspb"
-	"github.com/joho/godotenv"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -27,18 +24,6 @@ type request struct {
 type response struct {
 	Signature string `json:"signature"`
 	PublicKey string `json:"publicKey"`
-}
-
-// use godot package to load/read the .env file and
-// return the value of the key
-func GoDotEnvVariable(key string) string {
-	// Load .env file
-	err := godotenv.Load("../.env")
-	if err != nil {
-		log.Fatalf("Error loading .env file")
-	}
-
-	return os.Getenv(key)
 }
 
 // This function processes the request struct and returns a struct of the data
@@ -158,13 +143,8 @@ func signAsymmetric(name string, message []byte) ([]byte, error) {
 	return result.Signature, nil
 }
 
-func signData(input string, key string, auth string) response {
+func SignData(input string, key string, auth string, keyName string) response {
 	var reqData request
-
-	location := GoDotEnvVariable("LOCATION")
-	keyID := GoDotEnvVariable("KEY_VERSION")
-	keyRing := GoDotEnvVariable("KEYRING")
-	projectID := GoDotEnvVariable("PROJECT_ID")
 
 	//hard coded the request data
 	reqData.Auth = auth
@@ -172,29 +152,19 @@ func signData(input string, key string, auth string) response {
 	reqData.KeyID = key
 
 	// Process the input from the request data
-	message, keyId, err := parseInput(reqData)
+	message, _, err := parseInput(reqData)
 	if err != nil {
 		log.Fatalf("Error parsing the input request data %v", err)
 	}
 
-	// auth := reqData.Auth
-
 	// Create the name with relevant data
-	keyName := fmt.Sprintf("projects/%s/locations/%s/keyRings/%s/cryptoKeys/%s/cryptoKeyVersions/%s", projectID, location, keyRing, keyId, keyID)
-
-	// Get the time pre-signing
-	start := time.Now()
+	//keyName := fmt.Sprintf("projects/%s/locations/%s/keyRings/%s/cryptoKeys/%s/cryptoKeyVersions/%s", projectID, location, keyRing, keyId, keyID)
 
 	// Do the asymmetric signing
 	signature, err := signAsymmetric(keyName, message)
 	if err != nil {
 		log.Fatalf("Error signing the message: %v", err)
 	}
-
-	// Get the time post-signing
-	elapsed := time.Since(start)
-
-	fmt.Printf("Signing time is: %.3f ms\n", elapsed.Seconds()*1000)
 
 	// Get the public key
 	pubKey, err := getPublicKey(keyName)
