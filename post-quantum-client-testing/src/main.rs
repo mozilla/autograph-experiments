@@ -2,79 +2,238 @@ mod mldsa;
 mod ecdsa;
 mod rsa;
 mod falcon;
+mod constants;
 
 use std::time::Instant;
+use std::fs::File;
+use std::io::Write;
+use sysinfo::System;
+use serde::{Deserialize, Serialize};
+use constants::*;
 
-fn test_mldsa_small_payload(test_number: i32) {
-    let sig = "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".to_string();
-    let pk = "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".to_string();
-    let msg = "aGVsbG8=".to_string();
+#[derive(Serialize, Deserialize)]
+struct TestResult {
+    algorithm: String,
+    payload_size: String,
+    iterations: i32,
+    time_ms: f64,
+}
 
-    println!("Testing ML-DSA-65:");
+#[derive(Serialize, Deserialize)]
+struct SystemInfo {
+    os: String,
+    total_memory: u64,
+    cpu_brand: String,
+    cpu_cores: usize,
+}
+
+#[derive(Serialize, Deserialize)]
+struct PerformanceReport {
+    system_info: SystemInfo,
+    test_results: Vec<TestResult>,
+}
+
+fn test_mldsa_small_payload(test_number: i32) -> TestResult {
+    let small_msg = "aGVsbG8=".to_string(); // "hello"
+
+    println!("Testing Small Payload ML-DSA-65:");
     let start = Instant::now();
     for _ in 0..test_number {
-        let is_verify = mldsa::verify_signature(&sig, &pk, &msg).unwrap();
+        let is_verify = mldsa::verify_signature(MLDSA_SMALL_SIG, MLDSA_PK, &small_msg).unwrap();
         assert!(is_verify, "ML-DSA verification failed!");
     }
     let duration = start.elapsed();
-    println!("ML-DSA-65: {} iterations completed in {:?}\n", test_number, duration);
+    println!("Completed\n");
+
+    TestResult {
+        algorithm: "ML-DSA-65".to_string(),
+        payload_size: "small".to_string(),
+        iterations: test_number,
+        time_ms: duration.as_secs_f64() * 1000.0,
+    }
 }
 
-fn test_falcon_small_payload(test_number: i32) {
+ 
+fn test_mldsa_medium_payload(test_number: i32) -> TestResult {
+    let medium_msg = "aGkK".repeat(1024 * 512).to_string(); // "hi" repeatedly (around 1MB)
 
-    let pk = "CZ0BMwgoQnsQuLOTFKXzXTASSbuD5XrlCpoHkcSY1OumGQdffOj5capp9SQOCfLeCRMhmDaDcOozVB1fAZ3DU55ltnk6k/dJTKY4baQxUNaM1cNOlHMmfseYrwtmYLGLryfVvV0JSQudDEz4EThkUoeUktu6iIZikNCPt+RgQyX6BtsyDzZPNBXEyQddhQxrhpTPjkMYXLvHA7mgYNQiQU0wnslS9PvCyBRodTRdA92YdepU8ymRIihskdeJ3AVks3BLGqtqwYq116o9StwrR64eyiglRMtnxRmaLJRBgQD8RUXGY8ZPwJsUrpPQwOKzSRwAWNldgI73ENhusCJScZVnLm63QoH4Jy1rVqbe5+iIQYzp9/gSgBOphKTo/peJtk2rcO2p6mmiIwvJ7mOsyuVzpgwBVFye4EnRtFspvSjJC/FIrLO2SmdbhFH+4qBtp1lqQ4XCn4S8yiMA88H2GfbeNGOPdlvJSkSwIDxG3mF0hc88p1WnktMq5wFhfNdqqhAFdbPV10htUXaWwGrbSS8Z3IoQ2Zi5ap9n1MaKQJQiIz2IArNp/jmvz9S9vq8TACjwJC4eoZ3r1qCVyqvexoeumIqbeEzToc0+CBXXrDnwqLNcTfWJIJ/pxZXzMsBzQwjB+GVCuylsmc+3sbzj3wOIjhodSyhVzqfoKdDww+SO3aGQj+C8AIHf2NDSk4BM3gFDVvyGTDw3qudKqW7LNCQl4A225tkVE1F8cY2Ta2j7kDCSEq0WJJZCwjuYqGgOIRhVl8L9EEUaahNW9mPIeoUxDuYZdvJ1bRlbM7qYWRKImnJxFnHFiBJRbKDa7AERYpbT2BEnDkq0hOghlwZFgVFCPgmkZXzT8qKkJzfRrXOYohwSUg4S/0XkR3jh0mQGKb4CWYviTc8uwoAR517Mhsq/E5ZWwh9U58vzxfNPxkBjaYZuDszOMl+upXlc0tlTRe0nqUB2k16fSfAecgfPtgCCDlZZ11AOIbLBkBj/maY3U9EWjx2mS4JvZ6h4QgSy5VLbjtQ/Fx5OtK7FRwsEy6ZfSQmx+VHTuI7xeEac8b+6OpX4lr+S2kqEhQPeQq1LIv2mhplUE6e531CZ/N7mpafsBGpZ4oXRJAmozFnOipO2NS6nfkoDRVoYKINSawTUUEXS7leH5WdyFcLYYWHbYktoPgyCHIKim115ENfhBqrZ".to_string();
-    let sig = "OU9JzQotTQ4Jng0x6A2Ds8jEZRNj1BZjYrYOAhOzh55z5uLgeq2NKyMitsoxOITqq81D7YSnkZVBXqW6H6vm//mdbe5m5ZpFkRehakS7pd2KHwn5qed517dBs6L62Iq1v9fM0uCUq/Yh7MI2cPa8v8hbZvKjllcgHXwnp4uE1gnc7licsqjrhOMlLD/xlUzl+XLTsshRHri1F4j61DBiIzNaLTqYyo6iTfCRRAkv2XFTD+tC73/tXDQuFNPribwB/yRq5A1V8tY1OQbo5qSrtUJAeNYKKVonU4nK9mhQx5XN2ETQWkWFLKnl5B5MyxZrrWlLfxDXKb8m2pc69U8R8zXkliyQ7m0+xn5M6pjYo7JU3c+coumbNvmN3NXhXbl0tq2hZSEHB3ccZlTsL2OTxbm07txxaJuuGfRBjmnwynaBjrSlJW8iomm0iWnFwdtZ5bnIsskUuUcxmsLPYf+VxITMkETbNIrl3X/bDa0XPWIkltIXLmoF9/hvz/5vL25jOS+alSSMNGbSI/6WMxu13vlFLhL3OW+LUCp5FkUIfDD+B3YQy5f9mVrD5Q3og0PSGgQWdxewpFIJ1VKT/npR6X7Z12yrPH6Rp5b7KpmThktlPupDNzbyJfs+RH1Mi3r+OhxOO98uiKaHvm5SEFPyR+aMG0RO1m6s8eqOkKxJTrjBWUsz85wwImvKkKERBqVFsL47tUNZMiZaFPWa1DGeV9s4jhrsNrmJKDY+UnBA95kJowDstEwCL8LSw6RHQyxKbSpSJu+1VLy/Ixr6SpymrhwnsBJn+9eYyV1LHm9mNGWNLEGi2nnWBRmYEurh1M2iboYwqCdWVWbXpOhYNTLZNX60jpM5ewTn+GQYbB3S".to_string();
-    let msg = "aGVsbG8=".to_string();
-
-    println!("Testing Falcon-512:");
+    println!("Testing Medium Payload ML-DSA-65:");
     let start = Instant::now();
     for _ in 0..test_number {
-        let is_verify = falcon::verify_signature(&sig, &pk, &msg).unwrap();
+        let is_verify = mldsa::verify_signature(MLDSA_MEDIUM_SIG, MLDSA_PK, &medium_msg).unwrap();
+        assert!(is_verify, "ML-DSA verification failed!");
+    }
+    let duration = start.elapsed();
+    println!("Completed\n");
+
+    TestResult {
+        algorithm: "ML-DSA-65".to_string(),
+        payload_size: "medium".to_string(),
+        iterations: test_number,
+        time_ms: duration.as_secs_f64() * 1000.0,
+    }
+}
+
+fn test_falcon_small_payload(test_number: i32) -> TestResult {
+    let small_msg = "aGVsbG8=".to_string(); // "hello"
+
+    println!("Testing Small Payload Falcon-512:");
+    let start = Instant::now();
+    for _ in 0..test_number {
+        let is_verify = falcon::verify_signature(FALCON_SMALL_SIG, FALCON_SMALL_PK, &small_msg).unwrap();
         assert!(is_verify, "Falcon verification failed!");
     }
     let duration = start.elapsed();
-    println!("Falcon-512: {} iterations completed in {:?}\n", test_number, duration);
+    println!("Completed\n");
+
+    TestResult {
+        algorithm: "Falcon-512".to_string(),
+        payload_size: "small".to_string(),
+        iterations: test_number,
+        time_ms: duration.as_secs_f64() * 1000.0,
+    }
 }
 
-fn test_rsa_small_payload(test_number: i32) {
+fn test_falcon_medium_payload(test_number: i32) -> TestResult {
+    let medium_msg = "aGkK".repeat(1024 * 512).to_string(); // "hi" repeatedly (around 1MB)
 
-    let pk = "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQ0lqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FnOEFNSUlDQ2dLQ0FnRUF4SjVFeWZIMkVJcTVxb1F5RjQ3MQphOFJNUnFya1lXdnFQM2pQOVk1YXd1bnhHN013Sm91aHF4REE5bldUbEZzNkJOK01tWjY5NlZ5WlFwOGJaOGpBCnVLQ2RuVENQOEdkYnRraE1ZbUhOQ1Fkb1cwN29JUTFvVzd0WUVES1NaRWsvV1VrTGlRSVo2c0pFem41RUxPeGgKdjN3elQ5clNucU9FNEhoY3dtMU5zWGExSWlrMVJUdzdkaVdnelkvVnJTMWZMRmdoVnJLd2V6bXVIeTdXTFQydgplL1RxMWxacm51SWN4WmJXQVBvZkxNRHNTQTJISlJwSzg0Yk8yY2hSL2tiUitLTE8xMU1BMEM0bDJxbjRnVFByCnNmNWk3VFZ2RXZEb0pKZzVzcmc0clozS0k3QmpSeXgvZXIwWGRnQ3RUN0hLNFFsRGRLY3pIRDNQd004eUJNYy8KYUU4d1Y5R28rSnBETzN1NXk2Zkp6OVZ6dlhZeEpIbSs1eW0rbmsxbVMwMzJlV3JGRlBETHJrZGhaSEVCT0hieQo1Wlg5blRGc1dPalhWcStUZlhZbmdXWTJQZ0lha0VqYURwS3o1VWFVdC96RWlSVUVZUUh4dGNyNWFwOFdyZ2p4Cm16dTN1bmVRaElwc0F3UmRhUTZtdU43MlpXYm1HTzQ4cFExclhmR2h0Y1k0MjZGdldmak1ZdWpKQktYNlJBZEsKUzN3cDErZDQ4OVE0RW9OWDF1SzBUTEJuWWFPd2MydjJLaEpteW1DSEtYMFJtc3FTMVMwWmx0bFZ5dGJQcldzYwowWjVQTjdPNUZZVTBJMDNYZC93Q2pkV3JrbmZsUjJKSFFlRVJxZk5YWXVHVzVFNzMweE5mNjRPK0NXK3dSa2MwCjU2K2pTMzZ2cnlvdGhhM1F2eE15NkVNQ0F3RUFBUT09Ci0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo=".to_string();
-    let sig = "wgj+42lhTjStihA+6egJUEe0mGRKlvmZJ9guBuDUG3SyIwxPkPSdXhEbjTJ7+2KLEhWwhtxAn9bP+yeCdD4TvDicVjUpIlZP1iZL2Ycv3eoaxiT2NMUNnN0jY18I1EKbuDnfcAux+9g4F2oNsCY5q5VHiLxEGRVj9cVFkv3nDj+3tG2jlVpGJLJpsZA1UBMgaV0+9oM/wYDwFt1a2pVKI0m6/9PoMuhEQwR79czPMldYTV5TuOag/YAuUUOdjYsM14DqbLKnGsNNcQYsIyuYzeVJBkiRUucXCvx92436r84Hq1wPqFIvyn05TRrxSWp2ZmlbpB01hn0fDYJg/OU+UK1XzhFX0zqWPcpyArCWZK+s+IYWo/vcexI+U7Xv5Dj0QOZnJS4t3Kh9bg90WO4EJqcDDELhJF9P4YrNe7242LtG7u10cVWqaP8Tu4KHmfBuTZUDOgLsEX9mvvs9ga0LLIBsvhubWi2LVtCrU4Pj7Czpc3xh8cIu6noiVDk/UEqdtL8twPW43Tj+oFWXfZwSZZR7il5T7L2ZHq4VA3VTG47OfKHg5zY1zeNHTIY3ZoYkU862FGojWz+lcYgoeU0Qq3VNbRn8HBv8OJFe6YRqSOdMNpWs+egOon+ULMEX3ebbxYTTM73mnkRQTd0UDDr3oUfJUqHjw5U+wxkaJGG3VK4=".to_string();
-    let msg = "aGVsbG8=".to_string();
-
-    println!("Testing Rsa-4096:");
+    println!("Testing Medium Payload Falcon-512:");
     let start = Instant::now();
     for _ in 0..test_number {
-        let is_verify = rsa::verify_signature(&sig, &pk, &msg).unwrap();
+        let is_verify = falcon::verify_signature(FALCON_MEDIUM_SIG, FALCON_MEDIUM_PK, &medium_msg).unwrap();
+        assert!(is_verify, "Falcon verification failed!");
+    }
+    let duration = start.elapsed();
+    println!("Completed\n");
+
+    TestResult {
+        algorithm: "Falcon-512".to_string(),
+        payload_size: "medium".to_string(),
+        iterations: test_number,
+        time_ms: duration.as_secs_f64() * 1000.0,
+    }
+}
+
+fn test_rsa_small_payload(test_number: i32) -> TestResult {
+    let small_msg = "aGVsbG8=".to_string(); // "hello"
+
+    println!("Testing Small Payload Rsa-4096:");
+    let start = Instant::now();
+    for _ in 0..test_number {
+        let is_verify = rsa::verify_signature(RSA_SMALL_SIG, RSA_PK, &small_msg).unwrap();
         assert!(is_verify, "Rsa verification failed!");
     }
     let duration = start.elapsed();
-    println!("Rsa-4096: {} iterations completed in {:?}\n", test_number, duration);
+    println!("Completed\n");
+
+    TestResult {
+        algorithm: "RSA-4096".to_string(),
+        payload_size: "small".to_string(),
+        iterations: test_number,
+        time_ms: duration.as_secs_f64() * 1000.0,
+    }
 }
 
-fn test_ecdsa_small_payload(test_number: i32) {
-    let pk = "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUhZd0VBWUhLb1pJemowQ0FRWUZLNEVFQUNJRFlnQUUwOGgxTjR5M2s2RXEvTlRONWxjeHNtVEwvYjhoNFIyZApUUktRL1M1aHpVamRKYzFNN08rMDlVV2pYN2pRem5tc0pwWmwxUEdDZ1VaZUVoaWNMcGc2bERPTVRheUswQ0paClloQnRUMlBtY1dNdUk1amJiZ0VJQzZIbVlGNWtUT1BWCi0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo=".to_string();
-    let sig = "MGYCMQDJdlR7aRXM/tpEVcFo9QoODlDCHZtz6zO3wOG+1/wSlt9z+SfZN/I6QXxFBMa3Y7YCMQDzwJlzrEzGTO07tpFuN0F15HIKk3NESoELWqz7nsTvCUENhfVsayj8Ow1x2lCK5/M=".to_string();
-    let msg = "aGVsbG8=".to_string();
+fn test_rsa_medium_payload(test_number: i32) -> TestResult {
+    let medium_msg = "aGkK".repeat(1024 * 512).to_string(); // "hi" repeatedly (around 1MB)
 
-    println!("Testing ECDSA-384:");
+    println!("Testing Medium Payload RSA-4096:");
     let start = Instant::now();
     for _ in 0..test_number {
-        let is_verify = ecdsa::verify_signature(&sig, &pk, &msg).unwrap();
+        let is_verify = rsa::verify_signature(RSA_MEDIUM_SIG, RSA_PK, &medium_msg).unwrap();
+        assert!(is_verify, "Rsa verification failed!");
+    }
+    let duration = start.elapsed();
+    println!("Completed\n");
+
+    TestResult {
+        algorithm: "RSA-4096".to_string(),
+        payload_size: "medium".to_string(),
+        iterations: test_number,
+        time_ms: duration.as_secs_f64() * 1000.0,
+    }
+}
+
+fn test_ecdsa_small_payload(test_number: i32) -> TestResult {
+    let small_msg = "aGVsbG8=".to_string(); // "hello"
+
+    println!("Testing Small Payload ECDSA-384:");
+    let start = Instant::now();
+    for _ in 0..test_number {
+        let is_verify = ecdsa::verify_signature(ECDSA_SMALL_SIG, ECDSA_PK, &small_msg).unwrap();
         assert!(is_verify, "Ecdsa verification failed!");
     }
     let duration = start.elapsed();
-    println!("ECDSA-384: {} iterations completed in {:?}\n", test_number, duration);
+    println!("Completed\n");
+
+    TestResult {
+        algorithm: "ECDSA-384".to_string(),
+        payload_size: "small".to_string(),
+        iterations: test_number,
+        time_ms: duration.as_secs_f64() * 1000.0,
+    }
+}
+
+fn test_ecdsa_medium_payload(test_number: i32) -> TestResult {
+    let medium_msg = "aGkK".repeat(1024 * 512).to_string(); // "hi" repeatedly (around 1MB)
+
+    println!("Testing Medium Payload ECDSA-384:");
+    let start = Instant::now();
+    for _ in 0..test_number {
+        let is_verify = ecdsa::verify_signature(ECDSA_MEDIUM_SIG, ECDSA_PK, &medium_msg).unwrap();
+        assert!(is_verify, "Ecdsa verification failed!");
+    }
+    let duration = start.elapsed();
+    println!("Completed\n");
+
+    TestResult {
+        algorithm: "ECDSA-384".to_string(),
+        payload_size: "medium".to_string(),
+        iterations: test_number,
+        time_ms: duration.as_secs_f64() * 1000.0,
+    }
+}
+
+fn system_info() -> SystemInfo {
+    let s = System::new_all();
+
+    SystemInfo {
+        os: System::long_os_version().unwrap_or_else(|| "<unknown>".to_owned()),
+        total_memory: (s.total_memory() / 1000000000),
+        cpu_brand: s.cpus()[0].brand().to_string(),
+        cpu_cores: System::physical_core_count().unwrap(),
+    }
 }
 
 fn main() {
     let test_number = 1000;
+    let mut results = Vec::new();
 
     println!("Running signature verification with {} iterations:\n", test_number);
 
-    // Running the small payload tests
-    test_mldsa_small_payload(test_number);
-    test_falcon_small_payload(test_number);
-    test_rsa_small_payload(test_number);
-    test_ecdsa_small_payload(test_number);
+    // Running the small payload tests (<1MB)
+    results.push(test_mldsa_small_payload(test_number));
+    results.push(test_falcon_small_payload(test_number));
+    results.push(test_rsa_small_payload(test_number));
+    results.push(test_ecdsa_small_payload(test_number));
+
+    // Running the medium payload tests (around 1-2MB)
+    results.push(test_mldsa_medium_payload(test_number));
+    results.push(test_falcon_medium_payload(test_number));
+    results.push(test_rsa_medium_payload(test_number));
+    results.push(test_ecdsa_medium_payload(test_number));
+
+    let report = PerformanceReport {
+        system_info: system_info(),
+        test_results: results,
+    };
+
+    let json = serde_json::to_string_pretty(&report).expect("Failed to serialize");
+    println!("--PERFORMANCE RESULTS--\n");
+    println!("{}", json);
+
+    let filename = "performance_results.json";
+    let mut file = File::create(filename).expect("Failed to create file");
+    file.write_all(json.as_bytes()).expect("Failed to write to file");
+    println!("\nResults saved to: {}", filename);
 }

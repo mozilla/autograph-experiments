@@ -5,9 +5,9 @@ use openssl::pkey::PKey;
 use openssl::hash::MessageDigest;
 use openssl::sign::Verifier;
 
+// This function verifies an ecdsa signature
 pub fn verify_signature(base64_sig: &str, base64_pk: &str, base64_message: &str) -> Result<bool, Box<dyn Error>> {
     
-    // decode them out of base64
     let sig = BASE64_STANDARD.decode(base64_sig)?;
     let pk_pem = BASE64_STANDARD.decode(base64_pk)?;
     let message = BASE64_STANDARD.decode(base64_message)?;
@@ -26,5 +26,3 @@ pub fn verify_signature(base64_sig: &str, base64_pk: &str, base64_message: &str)
 
     Ok(is_verify)
 }
-
-
