@@ -5,11 +5,12 @@ mod falcon;
 mod constants;
 
 use std::time::Instant;
-use std::fs::File;
-use std::io::Write;
+use std::error::Error;
 use sysinfo::System;
 use serde::{Deserialize, Serialize};
 use constants::*;
+use cloud_storage::Client;
+use uuid::Uuid;
 
 #[derive(Serialize, Deserialize)]
 struct TestResult {
@@ -205,7 +206,8 @@ fn system_info() -> SystemInfo {
     }
 }
 
-fn main() {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
     let test_number = 1000;
     let mut results = Vec::new();
 
@@ -232,8 +234,15 @@ fn main() {
     println!("--PERFORMANCE RESULTS--\n");
     println!("{}", json);
 
-    let filename = "performance_results.json";
-    let mut file = File::create(filename).expect("Failed to create file");
-    file.write_all(json.as_bytes()).expect("Failed to write to file");
-    println!("\nResults saved to: {}", filename);
+    // Set bucket name and file name.
+    let bucket_name = "pq-experiment-results";
+    let filename = format!("results_{}.json", Uuid::new_v4());
+
+    // Initialize gcs client and upload json to bucket
+    let client = Client::default();
+    client.object().create(bucket_name, json.into_bytes(), &filename, "application/json").await?;
+
+    println!("\nResults uploaded to GCS bucket");
+    
+    Ok(())
 }
