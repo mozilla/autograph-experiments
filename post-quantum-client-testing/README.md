@@ -4,7 +4,7 @@ Benchmark signature verification performance for post-quantum algorithms ML-DSA-
 
 ## Download Release build
 
-- (Link TBD)
+[Download the latest release](https://github.com/mozilla/autograph-experiments/releases/latest)
 
 ---
 

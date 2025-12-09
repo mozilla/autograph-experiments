@@ -11,6 +11,7 @@ jobs:
             contents: write
         env:
             GH_TOKEN: ${{ github.token }}
+            SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
         strategy:
           matrix:
               platform:
@@ -80,11 +81,12 @@ jobs:
               run: |
                if [[ "${{ runner.os }}" == "Windows" ]]; then
                     binary="C:/t/${{ matrix.platform.target }}/release/post-quantum-client-testing.exe"
-                    filename="post-quantum-client-testing-${{ matrix.platform.name }}.exe"
+                    filename="post-quantum-client-testing-${{ matrix.platform.name }}.zip"
+                    7z a "$filename" "$binary"
+                    gh release upload $GITHUB_REF_NAME "$filename" --clobber
                 else
                     binary="post-quantum-client-testing/target/${{ matrix.platform.target }}/release/post-quantum-client-testing"
-                    filename="post-quantum-client-testing-${{ matrix.platform.name }}"
+                    filename="post-quantum-client-testing-${{ matrix.platform.name }}.zip"
+                    zip -j "$filename" "$binary"
+                    gh release upload $GITHUB_REF_NAME "$filename" --clobber
                 fi
-
-                cp "$binary" "$filename"
-                gh release upload $GITHUB_REF_NAME "$filename" --clobber
