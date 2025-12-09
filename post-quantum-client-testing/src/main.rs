@@ -244,10 +244,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
         let bucket_name = "pq-experiment-results";
         let filename = format!("results_{}.json", Uuid::new_v4());
 
-        let client = Client::default();
-        client.object().create(bucket_name, json.into_bytes(), &filename, "application/json").await?;
+        match Client::default().object().create(bucket_name, json.into_bytes(), &filename, "application/json").await {
+            Ok(_) => println!("\nResults uploaded to GCS bucket: {}", filename),
+            Err(err) => eprintln!("\nFailed GCS upload: {}", err), 
+        }
 
-        println!("\nResults uploaded to GCS bucket: {}", filename);
     } else {
         println!("\nSkipping GCS upload (no credentials available)");
     }
