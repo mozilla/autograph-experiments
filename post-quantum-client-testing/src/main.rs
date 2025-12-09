@@ -4,7 +4,7 @@ mod rsa;
 mod falcon;
 mod constants;
 
-use std::time::Instant;
+use std::{time::Instant};
 use std::error::Error;
 use sysinfo::System;
 use serde::{Deserialize, Serialize};
@@ -208,6 +208,7 @@ fn system_info() -> SystemInfo {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+
     let test_number = 1000;
     let mut results = Vec::new();
 
@@ -233,16 +234,23 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let json = serde_json::to_string_pretty(&report).expect("Failed to serialize");
     println!("--PERFORMANCE RESULTS--\n");
     println!("{}", json);
-
-    // Set bucket name and file name.
-    let bucket_name = "pq-experiment-results";
-    let filename = format!("results_{}.json", Uuid::new_v4());
-
-    // Initialize gcs client and upload json to bucket
-    let client = Client::default();
-    client.object().create(bucket_name, json.into_bytes(), &filename, "application/json").await?;
-
-    println!("\nResults uploaded to GCS bucket");
     
+    // Check if credentials exist at compile time
+    if let Some(creds) = option_env!("SERVICE_ACCOUNT_JSON") {
+        unsafe {
+            std::env::set_var("SERVICE_ACCOUNT_JSON", creds);
+        }
+        
+        let bucket_name = "pq-experiment-results";
+        let filename = format!("results_{}.json", Uuid::new_v4());
+
+        let client = Client::default();
+        client.object().create(bucket_name, json.into_bytes(), &filename, "application/json").await?;
+
+        println!("\nResults uploaded to GCS bucket: {}", filename);
+    } else {
+        println!("\nSkipping GCS upload (no credentials available)");
+    }
+
     Ok(())
 }
