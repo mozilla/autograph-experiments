@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"time"
 
 	"github.com/open-quantum-safe/liboqs-go/oqs"
 )
@@ -40,7 +39,6 @@ type request struct {
 type response struct {
 	Signature string `json:"signature"`
 	PublicKey string `json:"publicKey"`
-	//probably need a message field here
 }
 
 // This function processes the request struct and returns a struct of the data
@@ -133,7 +131,7 @@ func Verify(pubkey *PublicKey, msg, signature []byte) bool {
 	return isValid
 }
 
-func signData(input string, key string, auth string) response {
+func SignData(input string, key string, auth string) response {
 	var reqData request
 
 	//hard coded the request data
@@ -155,19 +153,11 @@ func signData(input string, key string, auth string) response {
 		log.Fatalf("Failed to generate a private key: %v", err)
 	}
 
-	// Get the time pre-signing
-	start := time.Now()
-
 	// Do the signing with the falcon signer
 	signature, err := privKey.SignPQC(message)
 	if err != nil {
 		log.Fatalf("error signing message: %v", err)
 	}
-
-	// Get the time post-signing
-	elapsed := time.Since(start)
-
-	fmt.Printf("Signing time is: %.3f ms\n", elapsed.Seconds()*1000)
 
 	// Get the public key
 	pubKey := privKey.PublicKey.Pk

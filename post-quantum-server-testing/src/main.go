@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"server-testing/ecdsa"
+	"server-testing/falcon"
 	"server-testing/mldsa"
 	"server-testing/rsa"
 	"strings"
@@ -57,6 +58,21 @@ func testMldsaMediumPayload(iterations int, location string, keyRing string, pro
 	start := time.Now()
 	for range iterations {
 		_ = mldsa.SignData(mediumInput, "mldsa", "null", keyName)
+	}
+	// Get the time post-signing
+	elapsed := time.Since(start)
+	fmt.Printf("Signing time is: %.3f ms\n", elapsed.Seconds()*1000)
+
+	//fmt.Printf("Completed")
+}
+
+func testFalconSmallPayload(iterations int) {
+
+	fmt.Printf("Testing Small Payload Falcon-512:\n")
+	// Get the time pre-signing
+	start := time.Now()
+	for range iterations {
+		_ = falcon.SignData(smallInput, "mldsa", "null")
 	}
 	// Get the time post-signing
 	elapsed := time.Since(start)
@@ -119,5 +135,6 @@ func main() {
 	keyRing := goDotEnvVariable("KEYRING")
 	projectID := goDotEnvVariable("PROJECT_ID")
 
+	testFalconSmallPayload(iterations)
 	testRsaSmallPayload(iterations, location, keyRing, projectID)
 }
