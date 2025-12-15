@@ -72,9 +72,18 @@ brew install cmake
 
 ---
 
+### BSD
+
+```bash
+# Install rust, clang, cmake
+pkg install rust cmake llvm
+```
+
+---
+
 ## 2. Build and Run
 
-### Linux and MacOS
+### Linux/MacOS/BSD
 ```bash
 cargo build --release
 ./target/release/post-quantum-client-testing
