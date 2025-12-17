@@ -25,7 +25,12 @@ Note: Powershell _might_ fail silently due to windows blocking the unsigned bina
 
 ### MacOS
 
-TODO
+Since we did not setup a executable signing pipeline, MacOS will not let you run the binary.
+
+To fix this, you can go into "Settings" then "Privacy & Security" and click "Run Anyway" to run the executable
+
+Or you can run via terminal like `./post-quantum-client-testing`
+Note: This will still require you to go into settings and allow the executable
 
 ## Building your own release
 
@@ -93,9 +98,18 @@ brew install cmake
 
 ---
 
+### BSD
+
+```bash
+# Install rust, cmake, clang
+pkg install rust cmake llvm
+```
+
+---
+
 ## 2. Build and Run
 
-### Linux and MacOS
+### Linux/MacOS/BSD
 ```bash
 cargo build --release
 ./target/release/post-quantum-client-testing
