@@ -242,7 +242,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
         
         let bucket_name = "pq-experiment-results";
-        let filename = format!("results_{}.json", Uuid::new_v4());
+        let filename = format!("results_{}_{}.json", System::name().unwrap_or_else(|| "<unknown>".to_owned()), Uuid::new_v4());
 
         match Client::default().object().create(bucket_name, json.into_bytes(), &filename, "application/json").await {
             Ok(_) => println!("\nResults uploaded to GCS bucket: {}", filename),
