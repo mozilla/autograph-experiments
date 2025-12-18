@@ -40,12 +40,6 @@ jobs:
               with:
                 fetch-depth: 0
 
-            - name: Install Linux dependencies
-              if: runner.os == 'Linux'
-              run: |
-                sudo apt update
-                sudo apt install -y build-essential pkg-config libclang-dev cmake libssl-dev
-
             - name: Install MacOS dependencies
               if: runner.os == 'macOS'
               run: |
@@ -66,7 +60,32 @@ jobs:
                 echo "OPENSSL_ROOT_DIR=C:\msys64\mingw64" >> $env:GITHUB_ENV
                 echo "CARGO_TARGET_DIR=C:\t" >> $env:GITHUB_ENV
             
+            - name: Debian 11 amd64 build
+              if: matrix.platform.name == 'linux-amd64'
+              run: |
+                docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace/post-quantum-client-testing debian:11 bash -c "
+                apt-get update &&
+                apt-get install -y curl build-essential pkg-config libclang-dev cmake libssl-dev &&
+                curl https://sh.rustup.rs -sSf | sh -s -- -y &&
+                source /root/.cargo/env &&
+                rustup target add x86_64-unknown-linux-gnu &&
+                cargo build --release --target x86_64-unknown-linux-gnu
+                "
+
+            - name: Debian 11 arm64 Build
+              if: matrix.platform.name == 'linux-arm64'
+              run: |
+                docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace/post-quantum-client-testing debian:11 bash -c "
+                apt-get update &&
+                apt-get install -y curl build-essential pkg-config libclang-dev cmake libssl-dev &&
+                curl https://sh.rustup.rs -sSf | sh -s -- -y &&
+                source /root/.cargo/env &&
+                rustup target add aarch64-unknown-linux-gnu &&
+                cargo build --release --target aarch64-unknown-linux-gnu
+                "
+
             - name: Build the binary
+              if: runner.os != 'Linux'
               working-directory: post-quantum-client-testing
               run: |
                 cargo build --release --target ${{ matrix.platform.target }}
