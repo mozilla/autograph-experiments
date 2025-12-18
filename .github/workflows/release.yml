@@ -40,12 +40,6 @@ jobs:
               with:
                 fetch-depth: 0
 
-            - name: Install Linux ARM64 dependencies
-              if: matrix.platform.name == 'linux-arm64'
-              run: |
-                sudo apt update
-                sudo apt install -y build-essential pkg-config libclang-dev cmake libssl-dev
-
             - name: Install MacOS dependencies
               if: runner.os == 'macOS'
               run: |
