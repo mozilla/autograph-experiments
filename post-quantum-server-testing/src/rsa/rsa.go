@@ -47,7 +47,7 @@ func parseInput(req request) ([]byte, string, error) {
 	return dcd, req.KeyID, nil
 }
 
-// getPublicKey retrieves the public key from an asymmetric key paird on Cloud KMS
+// getPublicKey retrieves the public key from an asymmetric key pair on Cloud KMS
 func getPublicKey(name string) ([]byte, error) {
 	// Create the client.
 	ctx := context.Background()

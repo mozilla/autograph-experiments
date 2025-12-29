@@ -17,7 +17,6 @@ import (
 type request struct {
 	Input string `json:"input"`
 	KeyID string `json:"keyid"`
-	Auth  string `json:"auth"`
 }
 
 // This is a struct for the output signature
@@ -27,27 +26,24 @@ type response struct {
 }
 
 // This function processes the request struct and returns a struct of the data
-func parseInput(req request) ([]byte, string, error) {
+func parseInput(req request) ([]byte, error) {
 	if req.Input == "" {
-		return nil, "", fmt.Errorf("missing the json data input")
+		return nil, fmt.Errorf("missing the json data input")
 	}
 	if req.KeyID == "" {
-		return nil, "", fmt.Errorf("missing the json keyid")
-	}
-	if req.Auth == "" {
-		return nil, "", fmt.Errorf("missing the json auth")
+		return nil, fmt.Errorf("missing the json keyid")
 	}
 
-	dcd, err := base64.StdEncoding.DecodeString(req.Input)
+	message, err := base64.StdEncoding.DecodeString(req.Input)
 	if err != nil {
-		return nil, "", fmt.Errorf("error decoding base64 input %v", err)
+		return nil, fmt.Errorf("error decoding base64 input %v", err)
 	}
 
 	// This returns the json []byte
-	return dcd, req.KeyID, nil
+	return message, nil
 }
 
-// getPublicKey retrieves the public key from an asymmetric key paird on Cloud KMS
+// getPublicKey retrieves the public key from an asymmetric key pair on Cloud KMS
 func getPublicKey(name string) ([]byte, error) {
 	// Create the client
 	ctx := context.Background()
@@ -77,7 +73,6 @@ func getPublicKey(name string) ([]byte, error) {
 // signAsymmetric will sign a plaintext message using a saved asymmetric private
 // key stored in Cloud KMS.
 func signAsymmetric(name string, message []byte) ([]byte, error) {
-
 	// Create the client.
 	ctx := context.Background()
 	client, err := kms.NewKeyManagementClient(ctx)
@@ -127,29 +122,18 @@ func signAsymmetric(name string, message []byte) ([]byte, error) {
 	return result.Signature, nil
 }
 
-func SignData(input string, key string, auth string, keyName string) response {
+func SignData(input string, key string, keyName string) response {
 	var reqData request
 
-	//location := GoDotEnvVariable("LOCATION")
-	//keyID := GoDotEnvVariable("KEY_VERSION")
-	//keyRing := GoDotEnvVariable("KEYRING")
-	//projectID := GoDotEnvVariable("PROJECT_ID")
-
-	//hard coded the request data
-	reqData.Auth = auth
+	// Input request data to be parsed
 	reqData.Input = input
 	reqData.KeyID = key
 
 	// Process the input from the request data
-	message, _, err := parseInput(reqData)
+	message, err := parseInput(reqData)
 	if err != nil {
 		log.Fatalf("Error parsing the input request data %v", err)
 	}
-
-	// auth := reqData.Auth
-
-	// Create the name with relevant data
-	//keyName := fmt.Sprintf("projects/%s/locations/%s/keyRings/%s/cryptoKeys/%s/cryptoKeyVersions/%s", projectID, location, keyRing, keyId, keyID)
 
 	// Do the asymmetric signing
 	signature, err := signAsymmetric(keyName, message)
