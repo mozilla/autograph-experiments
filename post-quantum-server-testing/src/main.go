@@ -8,6 +8,7 @@ import (
 	"server-testing/falcon"
 	"server-testing/mldsa"
 	"server-testing/rsa"
+	"server-testing/rsa_local"
 	"strings"
 	"time"
 
@@ -41,7 +42,7 @@ func testMldsaSmallPayload(iterations int, location string, keyRing string, proj
 	// Get the time pre-signing
 	start := time.Now()
 	for range iterations {
-		_ = mldsa.SignData(smallInput, "mldsa", "null", keyName)
+		_ = mldsa.SignData(smallInput, "mldsa", keyName)
 	}
 	// Get the time post-signing
 	elapsed := time.Since(start)
@@ -57,7 +58,7 @@ func testMldsaMediumPayload(iterations int, location string, keyRing string, pro
 	// Get the time pre-signing
 	start := time.Now()
 	for range iterations {
-		_ = mldsa.SignData(mediumInput, "mldsa", "null", keyName)
+		_ = mldsa.SignData(mediumInput, "mldsa", keyName)
 	}
 	// Get the time post-signing
 	elapsed := time.Since(start)
@@ -69,10 +70,17 @@ func testMldsaMediumPayload(iterations int, location string, keyRing string, pro
 func testFalconSmallPayload(iterations int) {
 
 	fmt.Printf("Testing Small Payload Falcon-512:\n")
+
+	// Generate a private key
+	privKey, err := falcon.GenerateKey()
+	if err != nil {
+		log.Fatalf("Failed to generate a private key: %v", err)
+	}
+
 	// Get the time pre-signing
 	start := time.Now()
 	for range iterations {
-		_ = falcon.SignData(smallInput, "mldsa", "null")
+		_ = falcon.SignData(smallInput, privKey)
 	}
 	// Get the time post-signing
 	elapsed := time.Since(start)
@@ -88,7 +96,7 @@ func testEcdsaSmallPayload(iterations int, location string, keyRing string, proj
 	// Get the time pre-signing
 	start := time.Now()
 	for range iterations {
-		_ = ecdsa.SignData(smallInput, "ecdsa", "null", keyName)
+		_ = ecdsa.SignData(smallInput, "ecdsa", keyName)
 	}
 	// Get the time post-signing
 	elapsed := time.Since(start)
@@ -104,7 +112,7 @@ func testEcdsaMediumPayload(iterations int, location string, keyRing string, pro
 	// Get the time pre-signing
 	start := time.Now()
 	for range iterations {
-		_ = ecdsa.SignData(mediumInput, "ecdsa", "null", keyName)
+		_ = ecdsa.SignData(mediumInput, "ecdsa", keyName)
 	}
 	// Get the time post-signing
 	elapsed := time.Since(start)
@@ -129,12 +137,37 @@ func testRsaSmallPayload(iterations int, location string, keyRing string, projec
 	//fmt.Printf("Completed")
 }
 
+func testRsaLocalSmallPayload(iterations int) {
+
+	fmt.Printf("Testing Small Payload RSA-4096:\n")
+
+	// Generate a private key
+	privKey, err := rsa_local.GenerateKey()
+	if err != nil {
+		log.Fatalf("Failed to generate a private key: %v", err)
+	}
+
+	// Get the time pre-signing
+	start := time.Now()
+	for range iterations {
+		_ = rsa_local.SignData(smallInput, privKey)
+	}
+
+	// Get the time post-signing
+	elapsed := time.Since(start)
+	fmt.Printf("Signing time is: %.3f ms\n", elapsed.Seconds()*1000)
+
+	//fmt.Printf("Completed")
+}
+
 func main() {
-	iterations := 10
+	iterations := 100
 	location := goDotEnvVariable("LOCATION")
 	keyRing := goDotEnvVariable("KEYRING")
 	projectID := goDotEnvVariable("PROJECT_ID")
 
 	testFalconSmallPayload(iterations)
-	testRsaSmallPayload(iterations, location, keyRing, projectID)
+	testRsaLocalSmallPayload(iterations)
+	testMldsaSmallPayload(iterations, location, keyRing, projectID)
+	testEcdsaSmallPayload(iterations, location, keyRing, projectID)
 }
