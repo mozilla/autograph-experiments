@@ -19,12 +19,6 @@ type request struct {
 	KeyID string `json:"keyid"`
 }
 
-// This is a struct for the output signature
-type response struct {
-	Signature string `json:"signature"`
-	PublicKey string `json:"publicKey"`
-}
-
 // This function processes the request struct and returns a struct of the data
 func parseInput(req request) ([]byte, error) {
 	if req.Input == "" {
@@ -34,50 +28,13 @@ func parseInput(req request) ([]byte, error) {
 		return nil, fmt.Errorf("missing the json keyid")
 	}
 
-	dcd, err := base64.StdEncoding.DecodeString(req.Input)
+	message, err := base64.StdEncoding.DecodeString(req.Input)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding base64 input %v", err)
 	}
 
 	// This returns the json []byte
-	return dcd, nil
-}
-
-// getPublicKey retrieves the public key from an asymmetric key paird on Cloud KMS
-func getPublicKey(name string) ([]byte, error) {
-	// Create the client.
-	ctx := context.Background()
-	client, err := kms.NewKeyManagementClient(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create kms client: %w", err)
-	}
-	defer client.Close()
-
-	// Build the request.
-	req := &kmspb.GetPublicKeyRequest{
-		Name: name,
-	}
-
-	// Call the API.
-	result, err := client.GetPublicKey(ctx, req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get public key: %w", err)
-	}
-
-	// The 'Pem' field is the raw string representation of the public key.
-	// Convert 'Pem' into bytes for further processing.
-	key := []byte(result.Pem)
-
-	// Perform integrity verification on result.
-	crc32c := func(data []byte) uint32 {
-		t := crc32.MakeTable(crc32.Castagnoli)
-		return crc32.Checksum(data, t)
-	}
-	if int64(crc32c(key)) != result.PemCrc32C.Value {
-		return nil, fmt.Errorf("getPublicKey: response corrupted in-transit")
-	}
-
-	return key, nil
+	return message, nil
 }
 
 // signAsymmetric will sign a plaintext message using a saved asymmetric private
@@ -139,7 +96,7 @@ func signAsymmetric(name string, message []byte) ([]byte, error) {
 	return result.Signature, nil
 }
 
-func SignData(input string, key string, keyName string) response {
+func SignData(input string, key string, keyName string) string {
 	var reqData request
 
 	//hard coded the request data
@@ -158,16 +115,5 @@ func SignData(input string, key string, keyName string) response {
 		log.Fatalf("Error signing the message: %v", err)
 	}
 
-	// Get the public key
-	pubKey, err := getPublicKey(keyName)
-	if err != nil {
-		log.Fatalf("error when getting public key: %v", err)
-	}
-
-	resp := response{
-		Signature: base64.StdEncoding.EncodeToString(signature),
-		PublicKey: base64.StdEncoding.EncodeToString(pubKey),
-	}
-
-	return resp
+	return base64.StdEncoding.EncodeToString(signature)
 }

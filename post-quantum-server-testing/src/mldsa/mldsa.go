@@ -19,12 +19,6 @@ type request struct {
 	KeyID string `json:"keyid"`
 }
 
-// This is a struct for the output signature
-type response struct {
-	Signature string `json:"signature"`
-	PublicKey string `json:"publicKey"`
-}
-
 // This function processes the request struct and returns a struct of the data
 func parseInput(req request) ([]byte, error) {
 	if req.Input == "" {
@@ -41,33 +35,6 @@ func parseInput(req request) ([]byte, error) {
 
 	// This returns the json []byte
 	return message, nil
-}
-
-// getPublicKey retrieves the public key from an asymmetric key pair on Cloud KMS
-func getPublicKey(name string) ([]byte, error) {
-	// Create the client
-	ctx := context.Background()
-	client, err := kms.NewKeyManagementClient(ctx)
-	if err != nil {
-		log.Fatalf("failed to setup client: %v", err)
-	}
-	defer client.Close()
-
-	// Build the request
-	req := &kmspb.GetPublicKeyRequest{
-		Name:            name,
-		PublicKeyFormat: kmspb.PublicKey_NIST_PQC,
-	}
-
-	// Call the API
-	result, err := client.GetPublicKey(ctx, req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get public key: %w", err)
-	}
-
-	// Can add integrity checks
-
-	return result.PublicKey.Data, nil
 }
 
 // signAsymmetric will sign a plaintext message using a saved asymmetric private
@@ -122,7 +89,7 @@ func signAsymmetric(name string, message []byte) ([]byte, error) {
 	return result.Signature, nil
 }
 
-func SignData(input string, key string, keyName string) response {
+func SignData(input string, key string, keyName string) string {
 	var reqData request
 
 	// Input request data to be parsed
@@ -141,16 +108,5 @@ func SignData(input string, key string, keyName string) response {
 		log.Fatalf("Error signing the message: %v", err)
 	}
 
-	// Get the public key
-	pubKey, err := getPublicKey(keyName)
-	if err != nil {
-		log.Fatalf("error when getting public key: %v", err)
-	}
-
-	resp := response{
-		Signature: base64.StdEncoding.EncodeToString(signature),
-		PublicKey: base64.StdEncoding.EncodeToString(pubKey),
-	}
-
-	return resp
+	return base64.StdEncoding.EncodeToString(signature)
 }
