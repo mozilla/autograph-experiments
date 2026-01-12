@@ -44,8 +44,6 @@ func testMldsaSmallPayload(iterations int, location string, keyRing string, proj
 	// Get the time post-signing
 	elapsed := time.Since(start)
 	fmt.Printf("Small Payload ML-DSA-65: %.3f ms\n", (elapsed.Seconds()*1000)/float64(iterations))
-
-	//fmt.Printf("Completed")
 }
 
 func testMldsaMediumPayload(iterations int, location string, keyRing string, projectID string, wg *sync.WaitGroup) {
@@ -60,8 +58,6 @@ func testMldsaMediumPayload(iterations int, location string, keyRing string, pro
 	// Get the time post-signing
 	elapsed := time.Since(start)
 	fmt.Printf("Medium Payload ML-DSA-65: %.3f ms\n", (elapsed.Seconds()*1000)/float64(iterations))
-
-	//fmt.Printf("Completed")
 }
 
 func testFalconSmallPayload(iterations int, wg *sync.WaitGroup) {
@@ -81,8 +77,6 @@ func testFalconSmallPayload(iterations int, wg *sync.WaitGroup) {
 	// Get the time post-signing
 	elapsed := time.Since(start)
 	fmt.Printf("Small Payload Falcon-512: %.3f ms\n", (elapsed.Seconds()*1000)/float64(iterations))
-
-	//fmt.Printf("Completed")
 }
 
 func testFalconMediumPayload(iterations int, wg *sync.WaitGroup) {
@@ -102,8 +96,6 @@ func testFalconMediumPayload(iterations int, wg *sync.WaitGroup) {
 	// Get the time post-signing
 	elapsed := time.Since(start)
 	fmt.Printf("Medium Payload Falcon-512: %.3f ms\n", (elapsed.Seconds()*1000)/float64(iterations))
-
-	//fmt.Printf("Completed")
 }
 
 func testEcdsaSmallPayload(iterations int, location string, keyRing string, projectID string, wg *sync.WaitGroup) {
@@ -118,8 +110,6 @@ func testEcdsaSmallPayload(iterations int, location string, keyRing string, proj
 	// Get the time post-signing
 	elapsed := time.Since(start)
 	fmt.Printf("Small Payload ECDSA-384: %.3f ms\n", (elapsed.Seconds()*1000)/float64(iterations))
-
-	//fmt.Printf("Completed")
 }
 
 func testEcdsaMediumPayload(iterations int, location string, keyRing string, projectID string, wg *sync.WaitGroup) {
@@ -134,8 +124,6 @@ func testEcdsaMediumPayload(iterations int, location string, keyRing string, pro
 	// Get the time post-signing
 	elapsed := time.Since(start)
 	fmt.Printf("Medium Payload ECDSA-384: %.3f ms\n", (elapsed.Seconds()*1000)/float64(iterations))
-
-	//fmt.Printf("Completed")
 }
 
 func testRsaSmallPayload(iterations int, wg *sync.WaitGroup) {
@@ -156,8 +144,6 @@ func testRsaSmallPayload(iterations int, wg *sync.WaitGroup) {
 	// Get the time post-signing
 	elapsed := time.Since(start)
 	fmt.Printf("Small Payload RSA-4096: %.3f ms\n", (elapsed.Seconds()*1000)/float64(iterations))
-
-	//fmt.Printf("Completed")
 }
 
 func testRsaMediumPayload(iterations int, wg *sync.WaitGroup) {
@@ -178,8 +164,6 @@ func testRsaMediumPayload(iterations int, wg *sync.WaitGroup) {
 	// Get the time post-signing
 	elapsed := time.Since(start)
 	fmt.Printf("Medium Payload RSA-4096: %.3f ms\n", (elapsed.Seconds()*1000)/float64(iterations))
-
-	//fmt.Printf("Completed")
 }
 
 func main() {
@@ -190,16 +174,15 @@ func main() {
 	var wg sync.WaitGroup
 
 	fmt.Printf("---Running Tests: Avg time per signature---\n\n")
+
+	// Create a workgroup for 8 functions
 	wg.Add(8)
+
 	// Run the small payload tests
 	go testFalconSmallPayload(iterations, &wg)
 	go testRsaSmallPayload(iterations, &wg)
 	go testMldsaSmallPayload(iterations, location, keyRing, projectID, &wg)
 	go testEcdsaSmallPayload(iterations, location, keyRing, projectID, &wg)
-
-	//wg.Wait()
-	//fmt.Printf("\n---Running Medium Payload Tests---\n\n")
-	//wg.Add(4)
 
 	// Run the medium payload tests
 	go testFalconMediumPayload(iterations, &wg)

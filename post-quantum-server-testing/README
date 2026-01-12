@@ -1,0 +1,54 @@
+# Post-Quantum Signature Generation Performance Test
+
+Benchmark signature generation performance for post-quantum algorithms ML-DSA-65, Falcon-512 and current algorithms RSA-4096, ECDSA-384.
+
+This is to help us investigate and understand performance issues we might run into while doing code-signing and content-signing.
+
+The test will execute 100 signature verifications for 4 different algorithms and 2 different payload sizes. Then return the signing time per operation of each algorithm.
+
+## Running the Testing Program
+
+This program is meant to be a server-side test and can only be tested by authenticated GCP users, otherwise KMS signing will not work. 
+
+
+### Linux (Ubuntu/Debian)
+
+#### 1. Install Dependencies
+
+```bash
+sudo apt update && sudo apt-get install -y \
+    git \
+    cmake \
+    gcc \
+    pkg-config \
+    libssl-dev
+```
+
+#### 2. Configure Environment Variables
+
+Create a `.env` file in the `src` directory with the Google KMS details:
+
+```bash
+LOCATION=global
+KEYRING=your-keyring
+PROJECT_ID=your-gcp-project-id
+```
+
+#### 3. Authenticate with GCP
+
+```bash
+gcloud auth application-default login
+```
+
+#### 4. Install Go Dependencies
+
+```bash
+cd post-quantum-server-testing/src
+go mod download
+```
+
+#### 5. Run the Tests
+
+```bash
+go run main.go
+```
