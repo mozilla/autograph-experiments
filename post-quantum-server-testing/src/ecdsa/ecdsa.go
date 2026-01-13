@@ -96,6 +96,7 @@ func signAsymmetric(name string, message []byte) ([]byte, error) {
 	return result.Signature, nil
 }
 
+// This function signs the data and and returns the signature as a base64 string
 func SignData(input string, key string, keyName string) string {
 	var reqData request
 

@@ -19,7 +19,7 @@ type request struct {
 	KeyID string `json:"keyid"`
 }
 
-// This function processes the request struct and returns a struct of the data
+// This function processes the request struct and returns the byte message
 func parseInput(req request) ([]byte, error) {
 	if req.Input == "" {
 		return nil, fmt.Errorf("missing the json data input")
@@ -85,7 +85,6 @@ func signAsymmetric(name string, message []byte) ([]byte, error) {
 		return nil, fmt.Errorf("AsymmetricSign: response corrupted in-transit")
 	}
 
-	//fmt.Fprintf(w, "Signed digest: %s", result.Signature)
 	return result.Signature, nil
 }
 

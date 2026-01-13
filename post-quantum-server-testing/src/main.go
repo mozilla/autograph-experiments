@@ -175,7 +175,6 @@ func main() {
 
 	fmt.Printf("---Running Tests: Avg time per signature---\n\n")
 
-	// Create a workgroup for 8 functions
 	wg.Add(8)
 
 	// Run the small payload tests
@@ -189,6 +188,7 @@ func main() {
 	go testRsaMediumPayload(iterations, &wg)
 	go testMldsaMediumPayload(iterations, location, keyRing, projectID, &wg)
 	go testEcdsaMediumPayload(iterations, location, keyRing, projectID, &wg)
+
 	wg.Wait()
 
 }
