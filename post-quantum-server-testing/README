@@ -4,12 +4,11 @@ Benchmark signature generation performance for post-quantum algorithms ML-DSA-65
 
 This is to help us investigate and understand performance issues we might run into while doing code-signing and content-signing.
 
-The test will execute 100 signature verifications for 4 different algorithms and 2 different payload sizes. Then return the signing time per operation of each algorithm.
+The test will execute 100 signature generations for 4 different algorithms each with 2 different payload sizes. Then return the signing time per operation of each algorithm.
 
 ## Running the Testing Program
 
 This program is meant to be a server-side test and can only be tested by authenticated GCP users, otherwise KMS signing will not work. 
-
 
 ### Linux (Ubuntu/Debian)
 
