@@ -21,12 +21,13 @@ sudo apt install -y \
     cmake \
     build-essential \
     pkg-config \
-    libssl-dev
+    libssl-dev \
+    golang-go
 ```
 
 #### 2. Configure Environment Variables
 
-Create a `.env` file in the `src` directory with the Google KMS details:
+Create a `.env` file in the `src` directory with your own Google KMS details:
 
 ```bash
 LOCATION=global
@@ -34,20 +35,48 @@ KEYRING=your-keyring
 PROJECT_ID=your-gcp-project-id
 ```
 
-#### 3. Authenticate with GCP
+#### 3. Build and Install Liboqs
+
+```bash
+# Clone and install the liboqs using cmake
+git clone --depth=1 https://github.com/open-quantum-safe/liboqs
+cmake -S liboqs -B liboqs/build -DBUILD_SHARED_LIBS=ON
+cmake --build liboqs/build --parallel 4
+sudo cmake --build liboqs/build --target install
+```
+**Note:** Change `--parallel 4` to the amount of available cores on your system.
+
+#### 4. Set Up liboqs-go Wrapper
+
+```bash
+# Clone the liboqs-go
+git clone --depth=1 https://github.com/open-quantum-safe/liboqs-go
+
+# Next, you must modify the following lines in $HOME/liboqs-go/.config/liboqs-go.pc
+LIBOQS_INCLUDE_DIR=/usr/local/include
+LIBOQS_LIB_DIR=/usr/local/lib
+
+# Add these environment variables
+export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$PWD/liboqs-go/.config
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+```
+
+**Note:** The `liboqs-go.pc` might already have the lines added
+
+#### 5. Authenticate with GCP
 
 ```bash
 gcloud auth application-default login
 ```
 
-#### 4. Install Go Dependencies
+#### 6. Install Go Dependencies
 
 ```bash
 cd post-quantum-server-testing/src
 go mod download
 ```
 
-#### 5. Run the Tests
+#### 7. Run the Program
 
 ```bash
 go run main.go
