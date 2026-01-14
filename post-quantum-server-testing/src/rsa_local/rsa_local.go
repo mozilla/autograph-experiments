@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log"
+	"sync"
 )
 
 const (
@@ -58,7 +59,8 @@ func (priv *PrivateKey) signPQC(msg []byte) ([]byte, error) {
 }
 
 // SignData signs input and returns a response with signature and public key
-func SignData(input string, privKey *PrivateKey) response {
+func SignData(input string, privKey *PrivateKey, wg *sync.WaitGroup) response {
+	defer wg.Done()
 
 	message, err := base64.StdEncoding.DecodeString(input)
 	if err != nil {

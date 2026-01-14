@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log"
+	"sync"
 
 	"github.com/open-quantum-safe/liboqs-go/oqs"
 )
@@ -74,7 +75,8 @@ func (priv *PrivateKey) SignPQC(msg []byte) (sig []byte, err error) {
 	return sign, nil
 }
 
-func SignData(input string, privKey *PrivateKey) response {
+func SignData(input string, privKey *PrivateKey, wg *sync.WaitGroup) response {
+	defer wg.Done()
 
 	// Decode the base64 input
 	message, err := base64.StdEncoding.DecodeString(input)

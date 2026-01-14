@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"hash/crc32"
 	"log"
+	"sync"
 
 	kms "cloud.google.com/go/kms/apiv1"
 	kmspb "cloud.google.com/go/kms/apiv1/kmspb"
@@ -88,7 +89,9 @@ func signAsymmetric(name string, message []byte) ([]byte, error) {
 	return result.Signature, nil
 }
 
-func SignData(input string, key string, keyName string) string {
+func SignData(input string, key string, keyName string, wg *sync.WaitGroup) string {
+	defer wg.Done()
+
 	var reqData request
 
 	// Input request data to be parsed

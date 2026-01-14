@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"hash/crc32"
 	"log"
+	"sync"
 
 	kms "cloud.google.com/go/kms/apiv1"
 	kmspb "cloud.google.com/go/kms/apiv1/kmspb"
@@ -97,7 +98,9 @@ func signAsymmetric(name string, message []byte) ([]byte, error) {
 }
 
 // This function signs the data and and returns the signature as a base64 string
-func SignData(input string, key string, keyName string) string {
+func SignData(input string, key string, keyName string, wg *sync.WaitGroup) string {
+	defer wg.Done()
+
 	var reqData request
 
 	//hard coded the request data

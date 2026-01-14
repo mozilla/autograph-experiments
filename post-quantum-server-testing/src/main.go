@@ -32,37 +32,49 @@ func goDotEnvVariable(key string) string {
 	return os.Getenv(key)
 }
 
-func testMldsaSmallPayload(iterations int, location string, keyRing string, projectID string, wg *sync.WaitGroup) {
-	defer wg.Done()
-
+func testMldsaSmallPayload(iterations int, location string, keyRing string, projectID string) {
 	keyName := fmt.Sprintf("projects/%s/locations/%s/keyRings/%s/cryptoKeys/mldsa/cryptoKeyVersions/1", projectID, location, keyRing)
 	// Get the time pre-signing
 	start := time.Now()
-	for range iterations {
-		_ = mldsa.SignData(smallInput, "mldsa", keyName)
+
+	// Create a waitgroup
+	var wg sync.WaitGroup
+	wg.Add(iterations)
+
+	for i := 0; i < iterations; i++ {
+		go func(j int) {
+			_ = mldsa.SignData(smallInput, "mldsa", keyName, &wg)
+		}(i)
 	}
+	wg.Wait()
+
 	// Get the time post-signing
 	elapsed := time.Since(start)
 	fmt.Printf("Small Payload ML-DSA-65: %.3f ms\n", (elapsed.Seconds()*1000)/float64(iterations))
 }
 
-func testMldsaMediumPayload(iterations int, location string, keyRing string, projectID string, wg *sync.WaitGroup) {
-	defer wg.Done()
-
+func testMldsaMediumPayload(iterations int, location string, keyRing string, projectID string) {
 	keyName := fmt.Sprintf("projects/%s/locations/%s/keyRings/%s/cryptoKeys/mldsa/cryptoKeyVersions/1", projectID, location, keyRing)
+
 	// Get the time pre-signing
 	start := time.Now()
-	for range iterations {
-		_ = mldsa.SignData(mediumInput, "mldsa", keyName)
+
+	// Create a waitgroup
+	var wg sync.WaitGroup
+	wg.Add(iterations)
+
+	for i := 0; i < iterations; i++ {
+		go func(j int) {
+			_ = mldsa.SignData(mediumInput, "mldsa", keyName, &wg)
+		}(i)
 	}
+	wg.Wait()
 	// Get the time post-signing
 	elapsed := time.Since(start)
 	fmt.Printf("Medium Payload ML-DSA-65: %.3f ms\n", (elapsed.Seconds()*1000)/float64(iterations))
 }
 
-func testFalconSmallPayload(iterations int, wg *sync.WaitGroup) {
-	defer wg.Done()
-
+func testFalconSmallPayload(iterations int) {
 	// Generate a private key
 	privKey, err := falcon.GenerateKey()
 	if err != nil {
@@ -71,17 +83,23 @@ func testFalconSmallPayload(iterations int, wg *sync.WaitGroup) {
 
 	// Get the time pre-signing
 	start := time.Now()
-	for range iterations {
-		_ = falcon.SignData(smallInput, privKey)
+
+	// Create a waitgroup
+	var wg sync.WaitGroup
+	wg.Add(iterations)
+
+	for i := 0; i < iterations; i++ {
+		go func(j int) {
+			_ = falcon.SignData(smallInput, privKey, &wg)
+		}(i)
 	}
+	wg.Wait()
 	// Get the time post-signing
 	elapsed := time.Since(start)
 	fmt.Printf("Small Payload Falcon-512: %.3f ms\n", (elapsed.Seconds()*1000)/float64(iterations))
 }
 
-func testFalconMediumPayload(iterations int, wg *sync.WaitGroup) {
-	defer wg.Done()
-
+func testFalconMediumPayload(iterations int) {
 	// Generate a private key
 	privKey, err := falcon.GenerateKey()
 	if err != nil {
@@ -90,45 +108,64 @@ func testFalconMediumPayload(iterations int, wg *sync.WaitGroup) {
 
 	// Get the time pre-signing
 	start := time.Now()
-	for range iterations {
-		_ = falcon.SignData(mediumInput, privKey)
+	// Create a waitgroup
+	var wg sync.WaitGroup
+	wg.Add(iterations)
+
+	for i := 0; i < iterations; i++ {
+		go func(j int) {
+			_ = falcon.SignData(mediumInput, privKey, &wg)
+		}(i)
 	}
+	wg.Wait()
 	// Get the time post-signing
 	elapsed := time.Since(start)
 	fmt.Printf("Medium Payload Falcon-512: %.3f ms\n", (elapsed.Seconds()*1000)/float64(iterations))
 }
 
-func testEcdsaSmallPayload(iterations int, location string, keyRing string, projectID string, wg *sync.WaitGroup) {
-	defer wg.Done()
-
+func testEcdsaSmallPayload(iterations int, location string, keyRing string, projectID string) {
 	keyName := fmt.Sprintf("projects/%s/locations/%s/keyRings/%s/cryptoKeys/ecdsa/cryptoKeyVersions/1", projectID, location, keyRing)
 	// Get the time pre-signing
 	start := time.Now()
-	for range iterations {
-		_ = ecdsa.SignData(smallInput, "ecdsa", keyName)
+
+	// Create a waitgroup
+	var wg sync.WaitGroup
+	wg.Add(iterations)
+
+	for i := 0; i < iterations; i++ {
+		go func(j int) {
+			_ = ecdsa.SignData(smallInput, "ecdsa", keyName, &wg)
+		}(i)
 	}
+	wg.Wait()
+
 	// Get the time post-signing
 	elapsed := time.Since(start)
 	fmt.Printf("Small Payload ECDSA-384: %.3f ms\n", (elapsed.Seconds()*1000)/float64(iterations))
 }
 
-func testEcdsaMediumPayload(iterations int, location string, keyRing string, projectID string, wg *sync.WaitGroup) {
-	defer wg.Done()
-
+func testEcdsaMediumPayload(iterations int, location string, keyRing string, projectID string) {
 	keyName := fmt.Sprintf("projects/%s/locations/%s/keyRings/%s/cryptoKeys/ecdsa/cryptoKeyVersions/1", projectID, location, keyRing)
 	// Get the time pre-signing
 	start := time.Now()
-	for range iterations {
-		_ = ecdsa.SignData(mediumInput, "ecdsa", keyName)
+
+	// Create a waitgroup
+	var wg sync.WaitGroup
+	wg.Add(iterations)
+
+	for i := 0; i < iterations; i++ {
+		go func(j int) {
+			_ = ecdsa.SignData(mediumInput, "ecdsa", keyName, &wg)
+		}(i)
 	}
+	wg.Wait()
+
 	// Get the time post-signing
 	elapsed := time.Since(start)
 	fmt.Printf("Medium Payload ECDSA-384: %.3f ms\n", (elapsed.Seconds()*1000)/float64(iterations))
 }
 
-func testRsaSmallPayload(iterations int, wg *sync.WaitGroup) {
-	defer wg.Done()
-
+func testRsaSmallPayload(iterations int) {
 	// Generate a private key
 	privKey, err := rsa_local.GenerateKey()
 	if err != nil {
@@ -137,18 +174,24 @@ func testRsaSmallPayload(iterations int, wg *sync.WaitGroup) {
 
 	// Get the time pre-signing
 	start := time.Now()
-	for range iterations {
-		_ = rsa_local.SignData(smallInput, privKey)
+
+	// Create a waitgroup
+	var wg sync.WaitGroup
+	wg.Add(iterations)
+
+	for i := 0; i < iterations; i++ {
+		go func(j int) {
+			_ = rsa_local.SignData(smallInput, privKey, &wg)
+		}(i)
 	}
+	wg.Wait()
 
 	// Get the time post-signing
 	elapsed := time.Since(start)
 	fmt.Printf("Small Payload RSA-4096: %.3f ms\n", (elapsed.Seconds()*1000)/float64(iterations))
 }
 
-func testRsaMediumPayload(iterations int, wg *sync.WaitGroup) {
-	defer wg.Done()
-
+func testRsaMediumPayload(iterations int) {
 	// Generate a private key
 	privKey, err := rsa_local.GenerateKey()
 	if err != nil {
@@ -157,9 +200,17 @@ func testRsaMediumPayload(iterations int, wg *sync.WaitGroup) {
 
 	// Get the time pre-signing
 	start := time.Now()
-	for range iterations {
-		_ = rsa_local.SignData(mediumInput, privKey)
+
+	// Create a waitgroup
+	var wg sync.WaitGroup
+	wg.Add(iterations)
+
+	for i := 0; i < iterations; i++ {
+		go func(j int) {
+			_ = rsa_local.SignData(mediumInput, privKey, &wg)
+		}(i)
 	}
+	wg.Wait()
 
 	// Get the time post-signing
 	elapsed := time.Since(start)
@@ -171,24 +222,19 @@ func main() {
 	location := goDotEnvVariable("LOCATION")
 	keyRing := goDotEnvVariable("KEYRING")
 	projectID := goDotEnvVariable("PROJECT_ID")
-	var wg sync.WaitGroup
 
 	fmt.Printf("---Running Tests: Avg time per signature---\n\n")
 
-	wg.Add(8)
-
 	// Run the small payload tests
-	go testFalconSmallPayload(iterations, &wg)
-	go testRsaSmallPayload(iterations, &wg)
-	go testMldsaSmallPayload(iterations, location, keyRing, projectID, &wg)
-	go testEcdsaSmallPayload(iterations, location, keyRing, projectID, &wg)
+	testFalconSmallPayload(iterations)
+	testRsaSmallPayload(iterations)
+	testMldsaSmallPayload(iterations, location, keyRing, projectID)
+	testEcdsaSmallPayload(iterations, location, keyRing, projectID)
 
 	// Run the medium payload tests
-	go testFalconMediumPayload(iterations, &wg)
-	go testRsaMediumPayload(iterations, &wg)
-	go testMldsaMediumPayload(iterations, location, keyRing, projectID, &wg)
-	go testEcdsaMediumPayload(iterations, location, keyRing, projectID, &wg)
-
-	wg.Wait()
+	testFalconMediumPayload(iterations)
+	testRsaMediumPayload(iterations)
+	testMldsaMediumPayload(iterations, location, keyRing, projectID)
+	testEcdsaMediumPayload(iterations, location, keyRing, projectID)
 
 }
