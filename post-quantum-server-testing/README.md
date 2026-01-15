@@ -8,7 +8,11 @@ The test will execute 100 signature generations for 4 different algorithms each 
 
 ## Running the Testing Program
 
+### Requirements
+
 This program is meant to be a server-side test and can only be tested by authenticated GCP users, otherwise KMS signing will not work. 
+
+**Note:** The ML-DSA-65 and ECDSA-384 test functions use KMS key names `mldsa` and `ecdsa`. If your KMS keys have different names, you'll need to update the key names in the `SignData()` function calls in `main.go`.
 
 ### Linux (Ubuntu/Debian)
 
@@ -35,7 +39,7 @@ KEYRING=your-keyring
 PROJECT_ID=your-gcp-project-id
 ```
 
-#### 3. Build and Install Liboqs
+#### 3. Build and Install liboqs
 
 ```bash
 # Clone and install the liboqs using cmake
