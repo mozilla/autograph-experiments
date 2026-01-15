@@ -11,9 +11,9 @@ import (
 )
 
 const (
-	sigName        = "Falcon-512"
-	PublicKeySize  = 897
-	PrivateKeySize = 1281
+	SIGNAME        = "Falcon-512"
+	PUBLICKEYSIZE  = 897
+	PRIVATEKEYSIZE = 1281
 )
 
 // Public key struct
@@ -37,7 +37,7 @@ type response struct {
 func GenerateKey() (*PrivateKey, error) {
 	signer := oqs.Signature{}
 
-	if err := signer.Init(sigName, nil); err != nil {
+	if err := signer.Init(SIGNAME, nil); err != nil {
 		log.Fatal(err)
 	}
 
@@ -59,7 +59,7 @@ func GenerateKey() (*PrivateKey, error) {
 func (priv *PrivateKey) SignPQC(msg []byte) (sig []byte, err error) {
 	signer := oqs.Signature{}
 
-	if err := signer.Init(sigName, priv.Sk); err != nil {
+	if err := signer.Init(SIGNAME, priv.Sk); err != nil {
 		return nil, fmt.Errorf("failed to init signer: %w", err)
 	}
 

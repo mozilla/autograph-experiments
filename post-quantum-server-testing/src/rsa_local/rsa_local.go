@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	KeySize = 4096
+	KEYSIZE = 4096
 )
 
 // Public key struct
@@ -35,7 +35,7 @@ type response struct {
 
 // GenerateKey generates a new RSA-4096 key pair
 func GenerateKey() (*PrivateKey, error) {
-	sk, err := rsa.GenerateKey(rand.Reader, KeySize)
+	sk, err := rsa.GenerateKey(rand.Reader, KEYSIZE)
 	if err != nil {
 		return nil, err
 	}
