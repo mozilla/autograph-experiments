@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"server-testing/ecdsa"
+	"server-testing/ecdsa_local"
 	"server-testing/falcon"
 	"server-testing/mldsa"
-	"server-testing/rsa_local"
+	"server-testing/rsa"
 	"strings"
 	"sync"
 	"time"
@@ -112,8 +112,7 @@ func testFalconMediumPayload(iterations int, privKey *falcon.PrivateKey) {
 	fmt.Printf("Medium Payload Falcon-512: %.3f ms\n", (elapsed.Seconds()*1000)/float64(iterations))
 }
 
-func testEcdsaSmallPayload(iterations int, location string, keyRing string, projectID string) {
-	keyName := fmt.Sprintf("projects/%s/locations/%s/keyRings/%s/cryptoKeys/ecdsa/cryptoKeyVersions/1", projectID, location, keyRing)
+func testEcdsaSmallPayload(iterations int, privKey *ecdsa_local.PrivateKey) {
 	// Get the time pre-signing
 	start := time.Now()
 
@@ -123,7 +122,7 @@ func testEcdsaSmallPayload(iterations int, location string, keyRing string, proj
 
 	for i := 0; i < iterations; i++ {
 		go func(j int) {
-			_ = ecdsa.SignData(SMALLINPUT, "ecdsa", keyName, &wg)
+			_ = ecdsa_local.SignData(SMALLINPUT, privKey, &wg)
 		}(i)
 	}
 	wg.Wait()
@@ -133,8 +132,7 @@ func testEcdsaSmallPayload(iterations int, location string, keyRing string, proj
 	fmt.Printf("Small Payload ECDSA-384: %.3f ms\n", (elapsed.Seconds()*1000)/float64(iterations))
 }
 
-func testEcdsaMediumPayload(iterations int, location string, keyRing string, projectID string) {
-	keyName := fmt.Sprintf("projects/%s/locations/%s/keyRings/%s/cryptoKeys/ecdsa/cryptoKeyVersions/1", projectID, location, keyRing)
+func testEcdsaMediumPayload(iterations int, privKey *ecdsa_local.PrivateKey) {
 	// Get the time pre-signing
 	start := time.Now()
 
@@ -144,7 +142,7 @@ func testEcdsaMediumPayload(iterations int, location string, keyRing string, pro
 
 	for i := 0; i < iterations; i++ {
 		go func(j int) {
-			_ = ecdsa.SignData(MEDIUMINPUT, "ecdsa", keyName, &wg)
+			_ = ecdsa_local.SignData(MEDIUMINPUT, privKey, &wg)
 		}(i)
 	}
 	wg.Wait()
@@ -154,7 +152,8 @@ func testEcdsaMediumPayload(iterations int, location string, keyRing string, pro
 	fmt.Printf("Medium Payload ECDSA-384: %.3f ms\n", (elapsed.Seconds()*1000)/float64(iterations))
 }
 
-func testRsaSmallPayload(iterations int, privKey *rsa_local.PrivateKey) {
+func testRsaSmallPayload(iterations int, location string, keyRing string, projectID string) {
+	keyName := fmt.Sprintf("projects/%s/locations/%s/keyRings/%s/cryptoKeys/rsa/cryptoKeyVersions/1", projectID, location, keyRing)
 	// Get the time pre-signing
 	start := time.Now()
 
@@ -164,7 +163,7 @@ func testRsaSmallPayload(iterations int, privKey *rsa_local.PrivateKey) {
 
 	for i := 0; i < iterations; i++ {
 		go func(j int) {
-			_ = rsa_local.SignData(SMALLINPUT, privKey, &wg)
+			_ = rsa.SignData(SMALLINPUT, "rsa", keyName, &wg)
 		}(i)
 	}
 	wg.Wait()
@@ -174,7 +173,8 @@ func testRsaSmallPayload(iterations int, privKey *rsa_local.PrivateKey) {
 	fmt.Printf("Small Payload RSA-4096: %.3f ms\n", (elapsed.Seconds()*1000)/float64(iterations))
 }
 
-func testRsaMediumPayload(iterations int, privKey *rsa_local.PrivateKey) {
+func testRsaMediumPayload(iterations int, location string, keyRing string, projectID string) {
+	keyName := fmt.Sprintf("projects/%s/locations/%s/keyRings/%s/cryptoKeys/rsa/cryptoKeyVersions/1", projectID, location, keyRing)
 	// Get the time pre-signing
 	start := time.Now()
 
@@ -184,7 +184,7 @@ func testRsaMediumPayload(iterations int, privKey *rsa_local.PrivateKey) {
 
 	for i := 0; i < iterations; i++ {
 		go func(j int) {
-			_ = rsa_local.SignData(MEDIUMINPUT, privKey, &wg)
+			_ = rsa.SignData(MEDIUMINPUT, "rsa", keyName, &wg)
 		}(i)
 	}
 	wg.Wait()
@@ -206,8 +206,8 @@ func main() {
 		log.Fatalf("Failed to generate a private key: %v", err)
 	}
 
-	// Generate a rsa private key
-	privKeyRsa, err := rsa_local.GenerateKey()
+	// Generate an ecdsa private key
+	privKeyEcdsa, err := ecdsa_local.GenerateKey()
 	if err != nil {
 		log.Fatalf("Failed to generate a private key: %v", err)
 	}
@@ -216,14 +216,14 @@ func main() {
 
 	// Run the small payload tests
 	testFalconSmallPayload(iterations, privKeyFalcon)
-	testRsaSmallPayload(iterations, privKeyRsa)
+	testEcdsaSmallPayload(iterations, privKeyEcdsa)
+	testRsaSmallPayload(iterations, location, keyRing, projectID)
 	testMldsaSmallPayload(iterations, location, keyRing, projectID)
-	testEcdsaSmallPayload(iterations, location, keyRing, projectID)
 
 	// Run the medium payload tests
 	testFalconMediumPayload(iterations, privKeyFalcon)
-	testRsaMediumPayload(iterations, privKeyRsa)
+	testEcdsaMediumPayload(iterations, privKeyEcdsa)
+	testRsaMediumPayload(iterations, location, keyRing, projectID)
 	testMldsaMediumPayload(iterations, location, keyRing, projectID)
-	testEcdsaMediumPayload(iterations, location, keyRing, projectID)
 
 }

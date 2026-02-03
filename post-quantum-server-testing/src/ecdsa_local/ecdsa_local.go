@@ -1,10 +1,10 @@
-package rsa_local
+package ecdsa_local
 
 import (
-	"crypto"
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
-	"crypto/rsa"
-	"crypto/sha256"
+	"crypto/sha512"
 	"crypto/x509"
 	"encoding/base64"
 	"fmt"
@@ -12,19 +12,15 @@ import (
 	"sync"
 )
 
-const (
-	KEYSIZE = 4096
-)
-
 // Public key struct
 type PublicKey struct {
-	Pk *rsa.PublicKey
+	Pk *ecdsa.PublicKey
 }
 
 // Private key struct
 type PrivateKey struct {
 	PublicKey
-	Sk *rsa.PrivateKey
+	Sk *ecdsa.PrivateKey
 }
 
 // Response struct
@@ -33,9 +29,9 @@ type response struct {
 	PublicKey string `json:"publicKey"`
 }
 
-// GenerateKey generates a new RSA-4096 key pair
+// GenerateKey generates a new ECDSA P-384 key pair
 func GenerateKey() (*PrivateKey, error) {
-	sk, err := rsa.GenerateKey(rand.Reader, KEYSIZE)
+	sk, err := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
 	if err != nil {
 		return nil, err
 	}
@@ -48,10 +44,10 @@ func GenerateKey() (*PrivateKey, error) {
 	return privateKey, nil
 }
 
-// SignPQC signs a message using the private key
+// signPQC signs a message using the private key
 func (priv *PrivateKey) signPQC(msg []byte) ([]byte, error) {
-	hash := sha256.Sum256(msg)
-	sign, err := rsa.SignPSS(rand.Reader, priv.Sk, crypto.SHA256, hash[:], nil)
+	hash := sha512.Sum384(msg)
+	sign, err := ecdsa.SignASN1(rand.Reader, priv.Sk, hash[:])
 	if err != nil {
 		return nil, fmt.Errorf("signing failed: %v", err)
 	}
@@ -72,7 +68,10 @@ func SignData(input string, privKey *PrivateKey, wg *sync.WaitGroup) response {
 		log.Fatalf("error signing message: %v", err)
 	}
 
-	pubKey := x509.MarshalPKCS1PublicKey(privKey.PublicKey.Pk)
+	pubKey, err := x509.MarshalPKIXPublicKey(privKey.PublicKey.Pk)
+	if err != nil {
+		log.Fatalf("error marshaling public key: %v", err)
+	}
 	resp := response{
 		Signature: base64.StdEncoding.EncodeToString(signature),
 		PublicKey: base64.StdEncoding.EncodeToString(pubKey),

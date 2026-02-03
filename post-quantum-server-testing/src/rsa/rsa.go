@@ -1,8 +1,8 @@
-package ecdsa
+package rsa
 
 import (
 	"context"
-	"crypto/sha512"
+	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
 	"hash/crc32"
@@ -53,7 +53,7 @@ func signAsymmetric(name string, message []byte) ([]byte, error) {
 	plaintext := message
 
 	// Calculate the digest of the message.
-	digest := sha512.New384()
+	digest := sha256.New()
 	if _, err := digest.Write(plaintext); err != nil {
 		return nil, fmt.Errorf("failed to create digest: %w", err)
 	}
@@ -70,8 +70,8 @@ func signAsymmetric(name string, message []byte) ([]byte, error) {
 	req := &kmspb.AsymmetricSignRequest{
 		Name: name,
 		Digest: &kmspb.Digest{
-			Digest: &kmspb.Digest_Sha384{
-				Sha384: digest.Sum(nil),
+			Digest: &kmspb.Digest_Sha256{
+				Sha256: digest.Sum(nil),
 			},
 		},
 		DigestCrc32C: wrapperspb.Int64(int64(digestCRC32C)),
