@@ -29,14 +29,14 @@ We want to evaluate the performance of our post-quantum algorithm choices and co
 
 **Recommendation:** We should switch to ML-DSA for code signing because it is already well supported and optimized for most existing hardware. Its performance and cost are also well within the acceptable range.
 
-* **Client-side:** ML-DSA and RSA have equivalent verification speed for small payloads, but ML-DSA is slower by 45% on medium payloads. ML-DSA is only slower than RSA on older hardware that is over 10 years old. **This difference is negligible**, an extra 2ms wouldn’t affect our code signing verification time since the operation occurs infrequently.  
+* **Client-side:** ML-DSA and RSA have equivalent verification speed for small payloads (4B), but ML-DSA is slower by 45% on medium payloads (2MB). ML-DSA is only slower than RSA on older hardware that is over 10 years old. **This difference is negligible**, an extra 2ms wouldn’t affect our code signing verification time since the operation occurs infrequently.  
 * **Server-side:** For signature generation, small payload ML-DSA is faster than RSA by 40%, while medium payload ML-DSA is faster by 10%.  
 * **Cost:** Due to larger certificate and signature sizes, this could increase the bandwidth needed for signatures by 6-7x. This would be a significant amount for content signing, where data can change daily. But for code signing this is less of an impact.  
 * **Conclusion:** Switching to ML-DSA for code signing will add post-quantum security to autograph, in exchange for negligible user impact and slightly increased costs.
 
 ## FN-DSA-512
 
-**Recommendation:** We should switch to FN-DSA for content signing and root/intermediate certificates because it is expected to receive NIST approval soon, has good performance, and lower bandwidth requirements.
+**Recommendation:** We should switch to FN-DSA for content signing and root/intermediate certificates because it is expected to receive [NIST approval soon]((https://csrc.nist.gov/projects/post-quantum-cryptography/post-quantum-cryptography-standardization/selected-algorithms)), and has good performance.
 
 * **Client-side:** FN-DSA has around 20x faster signature verification speed than ECDSA on small payloads. For medium payloads, FN-DSA is 44% slower than ECDSA, mainly on hardware that is over 10 years old. This difference is very small (around 2ms), so it will not affect users.  
 * **Server-side:** For signature generation, small payload FN-DSA has equivalent speeds to ECDSA, but for medium payload FN-DSA is 2x faster than ECDSA. Thus, our server side signing will have a positive impact on its speed.  
@@ -54,9 +54,9 @@ We want to evaluate the performance of our post-quantum algorithm choices and co
 | ECDSA-384 | 0.9736 ms | 4.9682 ms |
 | FN-DSA-512 | 0.0545 ms | 7.1921 ms |
 
-From this table, we can tell that FN-DSA is around 20x faster than ECDSA for small payloads. On the other hand, FN-DSA is slower by 45% for medium payload, which will slow down the verification process.
+From this table, we can tell that FN-DSA is around 20x faster than ECDSA for small payloads. On the other hand, FN-DSA is slower by 45% for medium payload, which will slow down the verification process by at most few milliseconds.
 
-For the code signing we compare the average signing time for RSA and ML-DSA. In this case, ML-DSA is 20x faster than RSA for small payloads and 44% slower than RSA for medium payloads. The difference between medium payloads is 2ms which shouldn’t negatively affect our users.
+For the code signing we compare the average signing time for RSA and ML-DSA. In this case, ML-DSA is 20x faster than RSA for small payloads and 44% slower than RSA for medium payloads. The difference between medium payloads is 2ms which shouldn’t negatively affect our users for code signing less than 2MB. Follow-up work will be conducted to test larger code signing requests.
 
 ## Signature Generation Average Time Per Operation
 
@@ -89,16 +89,16 @@ Note: FN-DSA-512 is the NIST name of FALCON-512
 
 ### Algorithm Performance \- CPU Cores
 
-![][image1]  
-![][image2]  
-The CPU core graph doesn’t show a strong correlation between the number of CPU cores and performance. In the data, the 8-core CPU has slower verification performance than the 6-core, so we can conclude that signature verification with our library ([OQS](https://github.com/open-quantum-safe/liboqs)) is not a parallel workload.
+![][CpuCoreSmall]  
+![][CpuCoreMedium]  
+The data in the graph shows the trend that a greater CPU core count leads to improved verification performance for both payload types. However, we have an outlier where the 8 core is slower than 6 core CPU. This devation occures because the 8 core CPU data is solely based on the AMD FX-8300 which is based on dated architecture and is over a decade old. This processor is unable to use modern instruction sets (AVX2) which bottlenecks the performance. From this we can conclude that signature verification with our library ([OQS](https://github.com/open-quantum-safe/liboqs)) has improved performance with a higher core CPU.
 
 31% of our users are on 4 core CPUs and 28% are on 2 cores ([link](https://data.firefox.com/dashboard/hardware)). Our graphs show slow verification performance for 2 core CPUs because they are generally old and have outdated architecture, leading to slow single core performance. The actual verification performance drop is around 6ms which is not concerning for us.
 
 ### Algorithm Performance \- Total RAM
 
-![][image3]  
-![][image4]  
+![][TotalRamSmall]  
+![][TotalRamMedium]  
 For both payload types, having more RAM doesn’t guarantee better signature verification speeds. For all 4 algorithms, machines with 16GB of ram outperformed those with 24GB. This shows that the algorithm performance isn’t affected by memory capacity and instead depends on if the CPU can pull data out of the RAM efficiently and keep its cache fed. There are a few hardware issues that can bottleneck the performance.  
 **Hardware Limitations:**
 
@@ -110,7 +110,8 @@ When we look at user data, 11% of users have 4GB RAM and 30% have 8GB ([link](ht
 
 ### Algorithm Performance \- Operating System
 
-![][image5]![][image6]  
+![][OsTypeSmall]
+![][OsTypeMedium]  
 From this graph we can see that there is no noticeable performance degradation in a specific operating system that we tested: MacOS, Windows, Linux. The variation in performance between them is mainly due to the hardware constraints of the machine. The 3 operating systems we tested make up 92% of [users](https://data.firefox.com/dashboard/hardware).
 
 ### Algorithm Performance \- CPU Model
@@ -132,8 +133,8 @@ From this graph we can see that there is no noticeable performance degradation i
 | AMD Ryzen 5 7640U | 2023 |
 | Apple M3 Pro | 2023 |
 
-![][image7]  
-![][image8]  
+![][CpuTypeSmall]  
+![][CpuTypeMedium]  
 In the CPU Model graphs, we see that modern CPUs consistently perform better than older generation CPUs. In our tests, CPUs that were older than 10 years have performance that is at least 2x slower. This is due to architectural constraints, with some processors having shared FPUs (like the AMD fx-8300) which can slow down signature verification. This combined with low core counts and poor single core performance leads to older generation CPUs performing significantly worse. 
 
 Although older CPUs perform slower, there is at most a 7ms difference in verification speed which will be negligible for our users. Based on this data, we can conclude that switching to the post-quantum algorithms ML-DSA and FN-DSA will not significantly degrade the performance for our end users.
@@ -226,13 +227,13 @@ From the signature generation testing results, we can conclude that the post qua
 
 ## Conclusion
 
-We should switch to our candidate post-quantum signature algorithms ML-DSA and FN-DSA because they provide enhanced security against quantum computers. Our verification speed will go up around 5ms for older hardware but this difference is negligible and will not affect the performance of our end users.
+We should switch to our candidate post-quantum signature algorithms ML-DSA and FN-DSA because they provide enhanced security against quantum computers. Our verification speed will go up around 5ms for older hardware but this difference is negligible and will not affect the performance of our end users. We also saw improvements running ML-DSA and RSA in GCP compared to a local build, which shows that there is some authorization overhead while running signing operations locally, whereas our local implementation of FN-DSA and ECDSA showed no difference.
 
 # Limitations
 
 ## Hardware Age and Architecture
 
-We have noticed that hardware with older architecture (around 10+ years) performs significantly worse for signature verification than modern hardware. Referring to the CPU age graph, there is a drop in CPU performance for the processors that are older than 2017\. This drop in performance is due to architectural constraints such as shared FPUs like the AMD fx-8300 and lack of modern instruction sets like AVX2, which our post quantum algorithms rely on to speed up the verification process.
+We have noticed that hardware with older architecture (around 10+ years) performs significantly worse for signature verification than modern hardware. Referring to the CPU age graph, there is a drop in CPU performance for the processors that are older than 2017. This drop in performance is due to architectural constraints such as shared FPUs like the AMD fx-8300 and lack of modern instruction sets like AVX2, which our post quantum algorithms rely on to speed up the verification process.
 
 ## Mobile Testing
 
@@ -244,7 +245,7 @@ Our testing data for different hardware is biased because it is tested with diff
 
 ## Testing Very Large Payloads
 
-Large payload signing happens every few weeks, so a little variation in time will not affect our users. We will test the larger payload sizes for code-signing.
+Large payload signing happens every few weeks, so a little variation in time will not affect our users. However, the max request size can be as high as [1.5GB](https://github.com/mozilla-services/autograph/blob/43e669d2fa1b734f0de88019ca4db657595e4b7e/handlers.go#L130). We will test the larger payload sizes for code-signing.
 
 # Future Considerations
 
@@ -258,11 +259,11 @@ We would want to further test the hardware more uniformly to reduce bias in our 
 * Post Quantum Algorithm Spreadsheet: [Autograph PQ Algorithm Specs](./pq-algorithm-specs.csv)  
 * Firefox Desktop Hardware Survey: [https://data.firefox.com/dashboard/hardware](https://data.firefox.com/dashboard/hardware)
 
-[image1]: ./images/image1.png
-[image2]: ./images/image2.png
-[image3]: ./images/image3.png
-[image4]: ./images/image4.png
-[image5]: ./images/image5.png
-[image6]: ./images/image6.png
-[image7]: ./images/image7.png
-[image8]: ./images/image8.png
+[CpuCoreSmall]: ./images/CpuCoreSmall.png
+[CpuCoreMedium]: ./images/CpuCoreMedium.png
+[TotalRamSmall]: ./images/TotalRamSmall.png
+[TotalRamMedium]: ./images/TotalRamMedium.png
+[OsTypeSmall]: ./images/OsTypeSmall.png
+[OsTypeMedium]: ./images/OsTypeMedium.png
+[CpuTypeSmall]: ./images/CpuTypeSmall.png
+[CpuTypeMedium]: ./images/CpuTypeMedium.png

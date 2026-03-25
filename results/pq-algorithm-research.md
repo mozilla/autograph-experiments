@@ -6,7 +6,7 @@ Below is the research process to help us determine which post quantum signature 
 
 ## Metrics to Measure
 
-Some of the key metrics that we will use are public keys and signature sizes along with the NIST security category to find a good balance between them that supports our needs.
+Some of the key metrics that we will use are public keys and signature sizes along with the NIST security category to find comparable algorithms that support our code and content signing needs.
 
 Private Key size is not an important deciding factor since it will be stored by Autograph and will not affect implementation cost or complexity.
 
@@ -19,7 +19,7 @@ Private Key size is not an important deciding factor since it will be stored by 
       3. Users that have telemetry disabled but still query remote settings  
       4. Firefox forks that have telemetry disabled but query remote-settings  
 2. For each user, the public key will need to be downloaded once  
-3. For each user, a signature will need to be downloaded for each collection update  
+3. For each user, a signature will need to be downloaded for each content update  
    1. Let’s estimate this at 50 times per week per user. Some weeks will be higher, some weeks lower. Some collections get updated multiple times per week
 
 The weekly estimated bandwidth (TB) will help us understand the cost of using the algorithms, and will be a significant deciding factor. The lower bandwidth will indicate the corresponding algorithm is more **cost efficient**.
@@ -39,7 +39,7 @@ We start off by going through and researching the major post quantum algorithm t
 1. Lattice-based  
    1. Algorithms  
       1. FALCON  
-         1. Falcon has a better combination of lower bandwidth and faster performance than scale better than most other algorithms at security category 1 and 5  
+         1. Falcon has a better combination of lower bandwidth, faster performance, and scales better than most other algorithms at security category 1 and 5  
          2. Has a small signature and key size  
          3. Relies on floating point arithmetic, which is not favourable since floating point arithmetic is handled [differently](https://falcon-sign.info/falcon.pdf#page=20) across various types of hardware and can cause inconsistencies/security [issues](https://eprint.iacr.org/2024/1709.pdf#page=2)  
       2. DILITHIUM (ML-DSA)  
@@ -166,7 +166,7 @@ MAYO was ruled out for code signing because it doesn't have Google KMS support, 
 
 The most promising algorithm for the Autograph Post Quantum code signing is the [ML-DSA-65](https://openquantumsafe.org/liboqs/algorithms/sig/ml-dsa), which is the NIST security category 3 implementation. This implementation is standardized by FIPS and receives support from Google KMS. It provides the fastest verification performance of its security category relative to other algorithms. The downside is that it requires a large weekly bandwidth (80TB).
 
-The best algorithm for content signing is Falcon-512, which is the NIST security category 1 implementation. The downgrade in security from a category 3 equivalent to category 1 is worth it for the performance increase, since we rotate keys frequently. It provides us with a low bandwidth (17TB) which minimizes cost, and is standardized by NIST. The verification performance and small signature size makes Falcon well suited for frequent key rotations. The downside is the lack of support from Google KMS, but we can store the keys inside Google Cloud storage since they are short lived. When implementing Falcon in Autograph we need to ensure we deal with floating point inconsistencies.
+The best algorithm for content signing is Falcon-512, which is the NIST security category 1 implementation. The downgrade in security from a category 3 equivalent to category 1 is worth it for the performance increase, since we rotate keys frequently. It provides us with a low bandwidth (17TB) which minimizes cost, and is standardized by NIST. The verification performance and small signature size makes Falcon well suited for frequent key rotations. The downside is the lack of support from Google KMS, but we hope that it will get supported before this reaches production. Since our end-entities are short lived this would still be a non-issue if the worst happens, as we can keep our root and intermediate secured. When implementing Falcon in Autograph we need to ensure we deal with floating point inconsistencies.
 
 ## Definitions
 
